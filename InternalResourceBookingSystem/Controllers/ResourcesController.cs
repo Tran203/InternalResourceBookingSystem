@@ -34,6 +34,7 @@ namespace InternalResourceBookingSystem.Controllers
             }
 
             var resource = await _context.Resources
+                .Include(r => r.Bookings.Where(b => b.EndTime >= DateTime.Now))
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (resource == null)
             {
@@ -58,10 +59,22 @@ namespace InternalResourceBookingSystem.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(resource);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(resource);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Resource Created Successfully!";
+                    return RedirectToAction(nameof(Index));
+
+                }
+                catch (Exception ex) {
+                    TempData["ErrorMessage"] = $"An error occurred while creating the resource: {ex.Message}";
+                    return View(resource);
+                }
+
+                
             }
+            TempData["ErrorMessage"] = "Failed to create resource. Please check the details and try again.";
             return View(resource);
         }
 
@@ -99,6 +112,7 @@ namespace InternalResourceBookingSystem.Controllers
                 {
                     _context.Update(resource);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Resource Updated Successfully!";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -113,6 +127,7 @@ namespace InternalResourceBookingSystem.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            TempData["ErrorMessage"] = "Failed to update resource. Please check the details and try again.";
             return View(resource);
         }
 
@@ -142,10 +157,26 @@ namespace InternalResourceBookingSystem.Controllers
             var resource = await _context.Resources.FindAsync(id);
             if (resource != null)
             {
-                _context.Resources.Remove(resource);
+                // If the resource has active bookings, we should not delete it.
+                if (_context.Bookings.Any(b => b.ResourceId == id && b.EndTime >= DateTime.Now))
+                {
+                    TempData["ErrorMessage"] = "Cannot delete resource with Active or Upcoming bookings.";
+                    return View(resource);
+                }
+
+                try
+                {
+                    _context.Resources.Remove(resource);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Resource Deleted Successfully!";
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"An error occurred while deleting the resource: {ex.Message}";
+                    return View(resource);
+                }
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 

@@ -22,8 +22,15 @@ namespace InternalResourceBookingSystem.Controllers
         // GET: Bookings
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Bookings.Include(b => b.Resource);
+            var applicationDbContext = _context.Bookings.Include(b => b.Resource).Where(b => b.EndTime >= DateTime.Now);
             return View(await applicationDbContext.ToListAsync());
+        }
+
+        //GET: Past Bookings
+        public async Task<IActionResult> PastBookings()
+        {
+            var pastBookings = _context.Bookings.Include(b => b.Resource).Where(b => b.EndTime < DateTime.Now);
+            return View(await pastBookings.ToListAsync());
         }
 
         // GET: Bookings/Details/5
@@ -59,11 +66,40 @@ namespace InternalResourceBookingSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,ResourceId,StartTime,EndTime,BookedBy,Purpose")] Booking booking)
         {
+            //End Time must be after Start Time
+            if (booking.EndTime <= booking.StartTime)
+            {
+                ModelState.AddModelError("EndTime", "End Time must be after Start Time.");
+            }
+
             if (ModelState.IsValid)
             {
-                _context.Add(booking);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                // Check for overlapping bookings to prevent time conflicts
+                var overlappingBookings = await _context.Bookings
+                    .Where(b => b.ResourceId == booking.ResourceId &&
+                                ((b.StartTime < booking.EndTime && b.EndTime > booking.StartTime)))
+                    .ToListAsync();
+
+                if (overlappingBookings.Any())
+                {
+                    TempData["ErrorMessage"] = "This resource is already booked during the requested time. Please choose another slot or resource, or adjust your times.";
+                    ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+                    return View(booking);
+                }
+
+                try
+                {
+                    _context.Add(booking);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Booking Created Successfully";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"An error occurred while deleting the resource: {ex.Message}";
+                    ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+                    return View(booking);
+                }
             }
             ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
             return View(booking);
@@ -98,8 +134,28 @@ namespace InternalResourceBookingSystem.Controllers
                 return NotFound();
             }
 
+            if (booking.EndTime <= booking.StartTime)
+            {
+                ModelState.AddModelError("EndTime", "End Time must be after Start Time.");
+            }
+
             if (ModelState.IsValid)
             {
+                // Check for overlapping bookings to prevent time conflicts
+                var overlappingBookings = await _context.Bookings
+                        .Where(b => b.ResourceId == booking.ResourceId &&
+                                    b.Id != booking.Id && // Exclude the current booking
+                                    ((b.StartTime < booking.EndTime && b.EndTime > booking.StartTime)))
+                        .ToListAsync();
+
+                if (overlappingBookings.Any())
+                {
+                    TempData["ErrorMessage"] = "This resource is already booked during the requested time. Please choose another slot or resource, or adjust your times.";
+                    ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+                    return View(booking);
+                }
+
+
                 try
                 {
                     _context.Update(booking);
@@ -116,6 +172,7 @@ namespace InternalResourceBookingSystem.Controllers
                         throw;
                     }
                 }
+                TempData["SuccessMessage"] = "Booking Edited Successfully";
                 return RedirectToAction(nameof(Index));
             }
             ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
@@ -149,10 +206,19 @@ namespace InternalResourceBookingSystem.Controllers
             var booking = await _context.Bookings.FindAsync(id);
             if (booking != null)
             {
-                _context.Bookings.Remove(booking);
+                try
+                {
+                    _context.Bookings.Remove(booking);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Booking Deleted Successfully";
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"An error occurred while deleting the booking: {ex.Message}";
+                    return View(booking);
+                }
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
