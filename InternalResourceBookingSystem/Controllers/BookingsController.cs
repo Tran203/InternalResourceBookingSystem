@@ -55,7 +55,7 @@ namespace InternalResourceBookingSystem.Controllers
         // GET: Bookings/Create
         public IActionResult Create()
         {
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Name");
+            ViewData["ResourceId"] = new SelectList(_context.Resources.Where(r => r.IsAvailable), "Id", "Name");//cannot book a unavailable resource
             return View();
         }
 
