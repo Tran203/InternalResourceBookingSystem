@@ -1,59 +1,126 @@
-﻿@model IEnumerable<InternalResourceBookingSystem.Models.Resource>
-
+﻿@model IEnumerable<Resource>
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Resources";
 }
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="resource-header">
+        <h1>Resources</h1>
+        <div class="subtitle">Manage Available Resources</div>
+    </div>
 
-<h1>Index</h1>
+    <!-- Search Input and Create Button -->
+    <div class="d-flex justify-content-between align-items-center mb-3 ">
+        <input type="text" id="searchInput" class="form-control me-2" placeholder="Search by name, description, or location..." />
+        <a asp-action="Create" class="btn btn-success">Add Resource</a>
+    </div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Location)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Capacity)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsAvailable)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Location)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Capacity)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsAvailable)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+    <!-- Resources Container -->
+    <div id="resourcesContainer" class="row"></div>
+
+    <!-- Pagination Controls -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>
+            <span id="paginationInfo"></span>
+        </div>
+        <div>
+            <button id="prevPage" class="btn btn-secondary" disabled>Previous</button>
+            <button id="nextPage" class=" btn btn-secondary">Next</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Convert Model data to JavaScript array
+        const resources = [
+        @foreach (var item in Model)
+        {
+                <text>
+                            {
+                                id: @item.Id,
+                                name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Name)),
+                                description: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Description)),
+                                location: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Location)),
+                                isAvailable: @(item.IsAvailable ? "true" : "false")
+                            },
+                </text>
+        }
+        ];
+
+        // Pagination variables
+        const itemsPerPage = 6;
+        let currentPage = 1;
+        let filteredResources = [...resources];
+
+        // Function to show cards
+        function renderCards(page) {
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedResources = filteredResources.slice(start, end);
+
+            $('#resourcesContainer').empty();
+            paginatedResources.forEach(resource => {
+                const cardHtml = `
+                    <div class="col-md-4 mb-4">
+                        <div class="card resource-card">
+                            <div class="card-header-name">${resource.name}</div>
+                            <div class="card-body">
+                                <p class="card-text"><strong>Description:</strong> ${resource.description || 'N/A'}</p>
+                                <p class="card-text"><strong>Location:</strong> ${resource.location || 'N/A'}</p>
+                                <span class="badge ${resource.isAvailable ? 'status-available' : 'status-unavailable'} availability-badge">
+                                    ${resource.isAvailable ? 'Available' : 'Unavailable'}
+                                </span>
+                                <div class="action-buttons mt-3">
+                                                    <a href="/Resources/Details/${resource.id}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>Details
+                            </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#resourcesContainer').append(cardHtml);
+            });
+
+            // Update pagination info
+            const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
+            $('#paginationInfo').text(`Page ${page} of ${totalPages}`);
+            $('#prevPage').prop('disabled', page === 1);
+            $('#nextPage').prop('disabled', page === totalPages || totalPages === 0);
+        }
+
+        // Search function
+        $('#searchInput').on('input', function () {
+            const query = $(this).val().toLowerCase();
+            filteredResources = resources.filter(resource =>
+                resource.name.toLowerCase().includes(query) ||
+                resource.description.toLowerCase().includes(query) ||
+                resource.location.toLowerCase().includes(query)
+            );
+            currentPage = 1;
+            renderCards(currentPage);
+        });
+
+        // Pagination controls
+        $('#prevPage').click(function () {
+            if (currentPage > 1) {
+                currentPage--;
+                renderCards(currentPage);
+            }
+        });
+
+        $('#nextPage').click(function () {
+            const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderCards(currentPage);
+            }
+        });
+
+        // Initial render
+        $(document).ready(function () {
+            renderCards(currentPage);
+        });
+    </script>
 }
-    </tbody>
-</table>

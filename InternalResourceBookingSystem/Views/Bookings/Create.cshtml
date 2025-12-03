@@ -1,52 +1,124 @@
-﻿@model InternalResourceBookingSystem.Models.Booking
-
+﻿@model Booking
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Booking";
 }
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="resource-header">
+        <h1>Create Booking</h1>
+        <div class="subtitle">Book a Resource </div>
+    </div>
 
-<h1>Create</h1>
-
-<h4>Booking</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="ResourceId" class="control-label"></label>
-                <select asp-for="ResourceId" class ="form-control" asp-items="ViewBag.ResourceId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="StartTime" class="control-label"></label>
-                <input asp-for="StartTime" class="form-control" />
-                <span asp-validation-for="StartTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="EndTime" class="control-label"></label>
-                <input asp-for="EndTime" class="form-control" />
-                <span asp-validation-for="EndTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="BookedBy" class="control-label"></label>
-                <input asp-for="BookedBy" class="form-control" />
-                <span asp-validation-for="BookedBy" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Purpose" class="control-label"></label>
-                <input asp-for="Purpose" class="form-control" />
-                <span asp-validation-for="Purpose" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <form asp-action="Create">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="form-group mb-3">
+                    <label asp-for="ResourceId" class="control-label"></label>
+                    <select asp-for="ResourceId" class="form-control" asp-items="ViewBag.ResourceId"></select>
+                    <span asp-validation-for="ResourceId" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="StartTime" class="control-label"></label>
+                    <input asp-for="StartTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="StartTime" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="EndTime" class="control-label"></label>
+                    <input asp-for="EndTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="EndTime" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="BookedBy" class="control-label"></label>
+                    <input asp-for="BookedBy" class="form-control" required placeholder="Enter your name" />
+                    <span asp-validation-for="BookedBy" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="Purpose" class="control-label"></label>
+                    <input asp-for="Purpose" class="form-control" required placeholder="Enter booking purpose" />
+                    <span asp-validation-for="Purpose" class="text-danger"></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <input type="submit" value="Create" class="btn btn-success" />
+                    <button type="button" class="btn btn-secondary" id="backBtn" style="width:auto;height:44px;border-radius: 50px;padding: 10px 24px">
+                        <i class="bi bi-arrow-left" style="margin-right: 8px;"></i>
+                        Back
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        window.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+            const startTimeInput = document.querySelector('input[name="StartTime"]');
+            const endTimeInput = document.querySelector('input[name="EndTime"]');
+
+            //GET LOCAL TIME
+            function getLocalDateTimeString() {
+                const now = new Date();
+                now.setSeconds(0, 0); // Remove seconds/milliseconds
+                const year = now.getFullYear();
+                const month = ("0" + (now.getMonth() + 1)).slice(-2);
+                const day = ("0" + now.getDate()).slice(-2);
+                const hours = ("0" + now.getHours()).slice(-2);
+                const minutes = ("0" + now.getMinutes()).slice(-2);
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+
+            const nowLocal = getLocalDateTimeString();
+            startTimeInput.min = nowLocal;
+            endTimeInput.min = nowLocal;
+
+
+            //Time Validations
+            function validateTimes(showMessages) {
+                const start = new Date(startTimeInput.value);
+                const end = new Date(endTimeInput.value);
+                let valid = true;
+
+                // clear previous field values
+                startTimeInput.setCustomValidity("");
+                endTimeInput.setCustomValidity("");
+
+                if (startTimeInput.value && start < new Date()) {
+                    startTimeInput.setCustomValidity("Start Time cannot be in the past.");
+                    valid = false;
+                }
+
+                if (endTimeInput.value && end < new Date()) {
+                    endTimeInput.setCustomValidity("End Time cannot be in the past.");
+                    valid = false;
+                }
+
+
+
+                if (showMessages && !valid) {
+                    startTimeInput.reportValidity();
+                    endTimeInput.reportValidity();
+                }
+
+                return valid;
+            }
+
+            startTimeInput.addEventListener("input", () => validateTimes(false));
+            endTimeInput.addEventListener("input", () => validateTimes(false));
+
+            form.addEventListener("submit", function (event) {
+                if (!validateTimes(true)) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+
 }

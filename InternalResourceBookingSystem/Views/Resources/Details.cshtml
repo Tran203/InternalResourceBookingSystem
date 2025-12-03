@@ -1,48 +1,151 @@
-﻿@model InternalResourceBookingSystem.Models.Resource
-
+﻿@model Resource
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Resource Details";
 }
+<div class="container-fluid">
+    <!-- Resource Header -->
+    <div class="resource-header" style="background: linear-gradient(135deg, var(--primary-color), var(--info-color)); color: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; box-shadow: 0 3px 6px rgba(76, 134, 249, 0.2);">
+        <h1 style="margin: 0; font-weight: 600; font-size: 1.8rem;">@Model.Name</h1>
+        <div class="subtitle" style="opacity: 0.9; margin-top: 0.4rem; font-size: 0.9rem;">Resource Details & Booking Information</div>
+    </div>
 
-<h1>Details</h1>
+    <div class="row">
+        <!-- Resource Information -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="info-card" style="background: white; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color);">
+                <h3 class="section-title" style="color: #495057; font-weight: 600; margin-bottom: 1rem; font-size: 1.2rem; display: flex; align-items: center;">
+                    <span style="content: ''; width: 3px; height: 20px; background: var(--primary-color); margin-right: 0.75rem; border-radius: 2px;"></span>
+                    Resource Information
+                </h3>
+                <div class="info-item" style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--light-bg); border-radius: 6px; border-left: 3px solid var(--primary-color);">
+                    <div class="info-label" style="font-weight: 600; color: #495057; margin-bottom: 0.25rem; font-size: 0.85rem;">Location:</div>
+                    <div class="info-value" style="color: #212529; font-weight: 500; font-size: 0.85rem;">@Model.Location</div>
+                </div>
+                <div class="info-item" style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--light-bg); border-radius: 6px; border-left: 3px solid var(--primary-color);">
+                    <div class="info-label" style="font-weight: 600; color: #495057; margin-bottom: 0.25rem; font-size: 0.85rem;">Capacity:</div>
+                    <div class="info-value" style="color: #212529; font-weight: 500; font-size: 0.85rem;">@Model.Capacity</div>
+                </div>
+                <div class="info-item" style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--light-bg); border-radius: 6px; border-left: 3px solid var(--primary-color);">
+                    <div class="info-label" style="font-weight: 600; color: #495057; margin-bottom: 0.25rem; font-size: 0.85rem;">Status:</div>
+                    <div class="info-value" style="font-size: 0.85rem;">
+                        @if (Model.IsAvailable)
+                        {
+                            <span class="status-badge status-available" style="display: inline-flex; align-items: center; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500; background-color: rgba(73, 168, 76, 0.1); color: var(--success-color); border: 1px solid rgba(73, 168, 76, 0.3);">Available</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge status-unavailable" style="display: inline-flex; align-items: center; padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500; background-color: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3);">Unavailable</span>
+                        }
+                    </div>
+                </div>
+                <div class="info-item" style="margin-bottom: 0.75rem; padding: 0.5rem; background: var(--light-bg); border-radius: 6px; border-left: 3px solid var(--primary-color);">
+                    <div class="info-label" style="font-weight: 600; color: #495057; margin-bottom: 0.25rem; font-size: 0.85rem;">Description:</div>
+                    <div class="info-value" style="color: #212529; font-weight: 500; font-size: 0.85rem;">@Model.Description</div>
+                </div>
+                <div class="main-actions" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary" style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; text-decoration: none; font-size: 0.8rem; background: var(--primary-color); color: white;">Edit Resource</a>
+                    <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-danger" style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; text-decoration: none; font-size: 0.8rem;">Delete Resource</a>
+                    <a asp-action="Index" class="btn btn-secondary" style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; text-decoration: none; font-size: 0.8rem; background: #6c757d; color: white;">Back to Resources</a>
+                </div>
+            </div>
+        </div>
 
-<div>
-    <h4>Resource</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Location)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Location)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Capacity)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Capacity)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsAvailable)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsAvailable)
-        </dd>
-    </dl>
+        <!-- Bookings Table -->
+        <div class="col-lg-8 col-md-6 mb-4">
+            <div class="bookings-table" style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);">
+                <h3 class="section-title" style="color: #495057; font-weight: 600; margin: 1rem; font-size: 1.2rem; display: flex; align-items: center;">
+                    <span style="content: ''; width: 3px; height: 20px; background: var(--primary-color); margin-right: 0.75rem; border-radius: 2px;"></span>
+                    Upcoming Bookings
+                </h3>
+                @if (Model.Bookings != null && Model.Bookings.Any())
+                {
+                    <table id="resourceBookings" class="table table-hover mb-0">
+                        <thead style="background: var(--primary-color); color: white;">
+                            <tr>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Start Time</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">End Time</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Booked By</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Purpose</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var booking in Model.Bookings)
+                            {
+                                <tr>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">
+                                        <strong>@booking.StartTime.ToLocalTime().ToString("MMM dd, yyyy")</strong><br>
+                                        <small class="text-muted">@booking.StartTime.ToLocalTime().ToString("h:mm tt")</small>
+                                    </td>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">
+                                        <strong>@booking.EndTime.ToLocalTime().ToString("MMM dd, yyyy")</strong><br>
+                                        <small class="text-muted">@booking.EndTime.ToLocalTime().ToString("h:mm tt")</small>
+                                    </td>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">@booking.BookedBy</td>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">
+                                        <span class="badge" style="background: var(--info-color); color: white; padding: 0.3rem 0.6rem; font-size: 0.7rem;">@booking.Purpose</span>
+                                    </td>
+                                    <td style="padding: 0.6rem;">
+                                        <div class="action-buttons" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                            <a asp-action="Details" asp-controller="Bookings" asp-route-id="@booking.Id" class="btn-action btn-primary-custom" style="padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; background: var(--primary-color); color: white;">Details</a>
+                                            <a asp-action="Edit" asp-controller="Bookings" asp-route-id="@booking.Id" class="btn-action btn-secondary-custom" style="padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; background: #6c757d; color: white;">Edit</a>
+                                            <a asp-action="Delete" asp-controller="Bookings" asp-route-id="@booking.Id" class="btn-action btn-danger-custom" style="padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; background: #dc3545; color: white;">Cancel</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="no-bookings" style="text-align: center; padding: 1.5rem; color: #6c757d; background: var(--light-bg); border-radius: 6px; border: 1px dashed var(--border-color); margin: 1rem;">
+                        <h5 style="font-size: 1rem; margin-bottom: 0.5rem;">No upcoming bookings</h5>
+                        @if (Model.IsAvailable)
+                        {
+                            <p style="font-size: 0.85rem;">This resource is currently available for booking.</p>
+                        }else{
+                        <p style="font-size: 0.85rem;">This resource is currently not available for booking.</p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var table = $('#resourceBookings').DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                pageLength: 3,
+                lengthChange: false,
+                //order: [[0, 'asc']]
+                language: {
+                    search: "Search bookings:",
+                    emptyTable: "No bookings available for this resource.",
+                    info: "Showing _START_ to _END_ of _TOTAL_ bookings",
+                    paginate: {
+                        previous: "Prev",
+                        next: "Next"
+                    }
+                },
+                columnDefs: [
+                    { orderable: false, targets: 3 } // Disable sorting on Actions column
+                ]
+            });
+
+            // Adjust info-card height to match bookings-table
+            function adjustInfoCardHeight() {
+                var tableHeight = $('.bookings-table').outerHeight();
+                $('.info-card').css('min-height', tableHeight + 'px');
+            }
+
+            adjustInfoCardHeight();
+            $(window).resize(adjustInfoCardHeight);
+        });
+    </script>
+}

@@ -1,8 +1,158 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using InternalResourceBookingSystem.Models.ViewModels
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var today = DateTime.Today;
+    var startOfMonth = Model.CurrentMonth;
+    var daysInMonth = DateTime.DaysInMonth(startOfMonth.Year, startOfMonth.Month);
+    var firstDayOfMonth = new DateTime(startOfMonth.Year, startOfMonth.Month, 1);
+    var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+    var bookingsByDay = Model.Bookings
+        .Where(b => b.EndTime >= DateTime.Now)
+        .GroupBy(b => b.StartTime.Date)
+        .ToDictionary(g => g.Key, g => g.Count());
+    var prevMonth = startOfMonth.AddMonths(-1);
+    var nextMonth = startOfMonth.AddMonths(1);
 }
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header" style="background: linear-gradient(135deg, var(--primary-color), var(--info-color)); color: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; box-shadow: 0 3px 6px rgba(76, 134, 249, 0.2);">
+        <h1 class="mb-0" style="font-weight: 600; font-size: 1.8rem;">Booking Dashboard</h1>
+        <div class="subtitle" style="opacity: 0.9; margin-top: 0.4rem; font-size: 0.9rem;">Active and Upcoming Bookings</div>
+    </div>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <div class="row">
+        <!-- Calendar Section -->
+        <div class="col-lg-4 col-md-5 mb-4">
+            <div class="calendar-container" style="background: white; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <a asp-action="Index" asp-route-year="@prevMonth.Year" asp-route-month="@prevMonth.Month" asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")" class="btn btn-outline-primary" style="padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem;">Previous</a>
+                    <h3 class="section-title" style="color: #495057; font-weight: 600; margin: 0; font-size: 1.2rem;">@startOfMonth.ToString("MMMM yyyy")</h3>
+                    <a asp-action="Index" asp-route-year="@nextMonth.Year" asp-route-month="@nextMonth.Month" asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")" class="btn btn-outline-primary" style="padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem;">Next</a>
+                </div>
+                <div class="calendar" id="calendar">
+                    <div class="calendar-header" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; color: #495057; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                        <div>Sun</div>
+                        <div>Mon</div>
+                        <div>Tue</div>
+                        <div>Wed</div>
+                        <div>Thu</div>
+                        <div>Fri</div>
+                        <div>Sat</div>
+                    </div>
+                    <div class="calendar-body" style="display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(5, 50px); gap: 3px;">
+                        @for (int i = 0; i < startDayOfWeek; i++)
+                        {
+                            <div style="padding: 4px;"></div>
+                        }
+                        @for (int day = 1; day <= daysInMonth; day++)
+                        {
+                            var currentDate = new DateTime(startOfMonth.Year, startOfMonth.Month, day);
+                            var isToday = currentDate.Date == today;
+                            var isPast = currentDate < today;
+                            var bookingCount = bookingsByDay.ContainsKey(currentDate) ? bookingsByDay[currentDate] : 0;
+                            var isSelected = currentDate.Date == Model.SelectedDate.Date;
+                            <a asp-action="Index" asp-route-selectedDate="@currentDate.ToString("yyyy-MM-dd")" asp-route-year="@startOfMonth.Year" asp-route-month="@startOfMonth.Month"
+                               class="calendar-day"
+                               style="text-align: center; padding: 4px; border-radius: 4px; background: @(isSelected ? "var(--primary-color)" : isToday ? "rgba(76, 134, 249, 0.1)" : "white"); color: @(isSelected ? "white" : isPast ? "#6c757d" : "#212529"); border: 1px solid @(isSelected ? "var(--primary-color)" : "var(--border-color)"); text-decoration: none; display: flex; flex-direction: column; justify-content: space-between; align-items: center; font-size: 0.8rem; @(isPast ? "pointer-events: none; opacity: 0.6;" : "cursor: pointer;")">
+                                <span style="font-weight: 500;">@day</span>
+                                @if (bookingCount > 0)
+                                {
+                                    <span style="background: var(--success-color); color: white; border-radius: 8px; padding: 1px 4px; font-size: 0.65rem; line-height: 1.2;">@bookingCount</span>
+                                }
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected Day Bookings -->
+        <div class="col-lg-8 col-md-7 mb-4">
+            <div class="bookings-table" style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);">
+                <h3 class="section-title" style="color: #495057; font-weight: 600; margin: 1rem; font-size: 1.2rem; display: flex; align-items: center;">
+                    <span style="content: ''; width: 3px; height: 20px; background: var(--primary-color); margin-right: 0.75rem; border-radius: 2px;"></span>
+                    Bookings for @Model.SelectedDate.ToString("MMMM dd, yyyy")
+                </h3>
+                @if (!Model.SelectedDayBookings.Any())
+                {
+                    <div vaga class="no-bookings" style="text-align: center; padding: 1.5rem; color: #6c757d; background: var(--light-bg); border-radius: 6px; border: 1px dashed var(--border-color); margin: 1rem;">
+                        <h5 style="font-size: 1rem; margin-bottom: 0.5rem;">No bookings for @Model.SelectedDate.ToString("MMMM dd, yyyy")</h5>
+                        <p style="font-size: 0.85rem;">Create a new booking to schedule a resource.</p>
+                    </div>
+                }
+                else
+                {
+                    <table id="selectedDayBookings" class="table table-hover mb-0">
+                        <thead style="background: var(--primary-color); color: white;">
+                            <tr>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Resource</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Start Time</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">End Time</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Booked By</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Purpose</th>
+                                <th style="padding: 0.6rem; font-weight: 600; font-size: 0.85rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var booking in Model.SelectedDayBookings)
+                            {
+                                <tr>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">@booking.Resource?.Name</td>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">
+                                        <strong>@booking.StartTime.ToString("h:mm tt")</strong>
+                                    </td>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">
+                                        <strong>@booking.EndTime.ToString("h:mm tt")</strong>
+                                    </td>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">@booking.BookedBy</td>
+                                    <td style="padding: 0.6rem; font-size: 0.85rem;">
+                                        <span class="badge" style="background: var(--info-color); color: white; padding: 0.3rem 0.6rem; font-size: 0.7rem;">@booking.Purpose</span>
+                                    </td>
+                                    <td style="padding: 0.6rem;">
+                                        <a asp-controller="Bookings" asp-action="Details" asp-route-id="@booking.Id" class="btn-action btn-primary-custom" style="padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.75rem; background: var(--primary-color); color: white;">Details</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var table = $('#selectedDayBookings').DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                pageLength: 5,
+                lengthChange: false,
+                language: {
+                    search: "Search bookings:",
+                    emptyTable: "No bookings available for the selected day.",
+                    info: "Showing _START_ to _END_ of _TOTAL_ bookings",
+                    paginate: {
+                        previous: "Prev",
+                        next: "Next"
+                    }
+                },
+                columnDefs: [
+                    { orderable: false, targets: 5 } // Disable sorting on Actions column
+                ]
+            });
+
+            // Adjust calendar height to match  bookings table
+            function adjustCalendarHeight() {
+                var tableHeight = $('.bookings-table').outerHeight();
+                $('.calendar-container').css('min-height', tableHeight + 'px');
+            }
+
+            adjustCalendarHeight();
+            $(window).resize(adjustCalendarHeight);
+        });
+    </script>
+}
